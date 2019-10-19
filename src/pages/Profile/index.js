@@ -6,6 +6,7 @@ import PropTypes from 'prop-types';
 import * as Yup from 'yup';
 
 import { updateProfileRequest } from '~/store/modules/user/actions';
+import { signOut } from '~/store/modules/auth/actions';
 
 import Header from '~/components/Header';
 import Background from '~/components/Background';
@@ -63,13 +64,14 @@ export default function Profile() {
       setOldPassword('');
       setPassword('');
       setConfirmPassword('');
-      Alert.alert('Sucesso', 'Dados atualizados');
     } catch ({ message }) {
       Alert.alert('Erro', message);
     }
   }
 
-  function handleExit() {}
+  function handleExit() {
+    dispatch(signOut());
+  }
 
   return (
     <>
