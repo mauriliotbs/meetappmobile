@@ -9,39 +9,60 @@ import api from '~/services/api';
 
 import Header from '~/components/Header';
 import Background from '~/components/Background';
+import Button from '~/components/Button';
 
-import { Container, MeetupView, MeetupTitle, MeetupText } from './styles';
+import {
+  Container,
+  MeetupView,
+  MeetupViewDetails,
+  MeetupViewText,
+  MeetupTitle,
+  MeetupText,
+  MeetupImage,
+} from './styles';
 
 export default function Attendance() {
   const [meetups, setMeetups] = useState([]);
 
-  useEffect(() => {
-    async function getAttendances() {
-      try {
-        const response = await api.get('/attendances');
-        if (response.data) {
-          const aux = response.data.map(meetup => {
-            return {
-              ...meetup,
-              formattedDate: format(
-                parseISO(meetup.date),
-                "dd 'de' MMMM 'de' yyyy', às' HH:mm",
-                {
-                  locale: pt,
-                },
-              ),
-            };
-          });
-          setMeetups(aux);
-        }
-      } catch (err) {
-        console.tron.log(meetups);
-        Alert.alert('Erro', 'Falha ao buscar lista de incrições');
+  async function getAttendances() {
+    try {
+      const response = await api.get('/attendances');
+      if (response.data) {
+        const aux = response.data.map(meetup => {
+          return {
+            ...meetup,
+            formattedDate: format(
+              parseISO(meetup.Meetup.date),
+              "dd 'de' MMMM 'de' yyyy', às' HH:mm",
+              {
+                locale: pt,
+              },
+            ),
+          };
+        });
+        setMeetups(aux);
       }
+    } catch (err) {
+      Alert.alert('Erro', 'Falha ao buscar lista de incrições');
     }
+  }
 
+  useEffect(() => {
     getAttendances();
-  }, [meetups]);
+  }, []);
+
+  async function handleAttendanceCancel(attendanceId) {
+    try {
+      await api.delete(`/attendances/${attendanceId}`);
+      Alert.alert('Sucesso', 'Você não está mais inscrito no Meetup');
+      getAttendances();
+    } catch (err) {
+      Alert.alert(
+        'Erro',
+        'Falha ao tentar cancelar a sua inscrição no Meetup.',
+      );
+    }
+  }
 
   return (
     <>
@@ -51,14 +72,43 @@ export default function Attendance() {
           {meetups.length > 0 ? (
             <FlatList
               data={meetups}
-              keyExtractor={item => item.Meetup.id}
-              renderItem={item => (
+              keyExtractor={item => item.Meetup.id.toString()}
+              showsVerticalScrollIndicator={false}
+              renderItem={({ item }) => (
                 <MeetupView>
-                  <MeetupTitle>{item.Meetup.title}</MeetupTitle>
-                  <MeetupText>{item.Meetup.formattedDate}</MeetupText>
-                  <MeetupText>{item.Meetup.location}</MeetupText>
-                  <Icon name="person" size={14} color="#999999" />
-                  <MeetupText>Organizador: {item.Meetup.User.name}</MeetupText>
+                  <MeetupImage
+                    source={{
+                      uri: item.Meetup.File.url,
+                    }}
+                  />
+                  <MeetupViewDetails>
+                    <MeetupTitle>{item.Meetup.title}</MeetupTitle>
+                    <MeetupViewText>
+                      <Icon name="event" size={13} color="#999999" />
+                      <MeetupText>{item.formattedDate}</MeetupText>
+                    </MeetupViewText>
+                    <MeetupViewText>
+                      <Icon
+                        name="place"
+                        size={13}
+                        color="#999999"
+                        margin={15}
+                      />
+                      <MeetupText>{item.Meetup.location}</MeetupText>
+                    </MeetupViewText>
+                    <MeetupViewText>
+                      <Icon name="person" size={13} color="#999999" />
+                      <MeetupText>
+                        Organizador: {item.Meetup.User.name}
+                      </MeetupText>
+                    </MeetupViewText>
+
+                    <Button
+                      style={{ backgroundColor: '#D44059' }}
+                      onPress={() => handleAttendanceCancel(item.id)}>
+                      Cancelar inscrição
+                    </Button>
+                  </MeetupViewDetails>
                 </MeetupView>
               )}
             />

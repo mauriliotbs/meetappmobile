@@ -69,7 +69,7 @@ export default function Profile() {
     }
   }
 
-  function handleExit() {
+  function handleLogOut() {
     dispatch(signOut());
   }
 
@@ -133,7 +133,9 @@ export default function Profile() {
             </Button>
           </Form>
           <DivExitButton>
-            <Button onPress={handleExit} style={{ backgroundColor: '#d44059' }}>
+            <Button
+              onPress={handleLogOut}
+              style={{ backgroundColor: '#d44059' }}>
               Sair do Meetapp
             </Button>
           </DivExitButton>
