@@ -113,7 +113,11 @@ export default function Attendance() {
               )}
             />
           ) : (
-            <MeetupText>Você não está inscrito em nenhum Meetup =(</MeetupText>
+            <MeetupViewDetails>
+              <MeetupText>
+                Você não está inscrito em nenhum Meetup =(
+              </MeetupText>
+            </MeetupViewDetails>
           )}
         </Container>
       </Background>
