@@ -1,7 +1,8 @@
 import React, { useRef, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Image } from 'react-native';
+import { Image, Alert } from 'react-native';
 import { useDispatch } from 'react-redux';
+import * as Yup from 'yup';
 
 import { signUpRequest } from '~/store/modules/auth/actions';
 
@@ -13,6 +14,16 @@ import logo from '~/assets/logo.png';
 
 import { Container, Form, SignLink, SignLinkText } from './styles';
 
+const schema = Yup.object().shape({
+  name: Yup.string().required('O nome completo é obrigatório'),
+  email: Yup.string()
+    .email('Insira um e-mail válido')
+    .required('O e-mail é obrigatório'),
+  password: Yup.string()
+    .min(6, 'A senha deve possuir no mínimo 6 dígitos')
+    .required('A senha é obrigatória'),
+});
+
 export default function SignUp({ navigation }) {
   const emailRef = useRef();
   const passwordRef = useRef();
@@ -23,8 +34,14 @@ export default function SignUp({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  function handleSubmit() {
-    dispatch(signUpRequest(name, email, password));
+  async function handleSubmit() {
+    try {
+      const data = { name, email, password };
+      await schema.validate(data);
+      dispatch(signUpRequest(name, email, password));
+    } catch ({ message }) {
+      Alert.alert('Erro', message);
+    }
   }
 
   return (

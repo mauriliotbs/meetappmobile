@@ -2,6 +2,7 @@ import { Alert } from 'react-native';
 import { all, takeLatest, put, call, delay } from 'redux-saga/effects';
 
 import api from '~/services/api';
+import NavigationService from '~/services/navigation';
 
 import { signInSuccess, signFailure } from './actions';
 
@@ -43,6 +44,8 @@ export function* signUp({ payload }) {
     });
 
     // history.push('/');
+    NavigationService.navigate('SignIn');
+    Alert.alert('Sucesso', 'Conta criada com sucesso!');
   } catch (err) {
     Alert.alert(
       'Falha no cadastro',
@@ -64,13 +67,8 @@ export function setToken({ payload }) {
   }
 }
 
-export function signOut() {
-  // history.push('/');
-}
-
 export default all([
   takeLatest('@auth/SIGN_IN_REQUEST', signIn),
   takeLatest('@auth/SIGN_UP_REQUEST', signUp),
-  takeLatest('@auth/SIGN_OUT', signOut),
   takeLatest('persist/REHYDRATE', setToken),
 ]);
