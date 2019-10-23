@@ -4,6 +4,7 @@ import { parseISO, format } from 'date-fns';
 import pt from 'date-fns/locale/pt';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import PropTypes from 'prop-types';
+import { withNavigationFocus } from 'react-navigation';
 
 import api from '~/services/api';
 
@@ -21,7 +22,7 @@ import {
   MeetupImage,
 } from './styles';
 
-export default function Attendance({ navigation }) {
+function Attendance({ isFocused }) {
   const [meetups, setMeetups] = useState([]);
 
   async function getAttendances() {
@@ -48,12 +49,10 @@ export default function Attendance({ navigation }) {
   }
 
   useEffect(() => {
-    getAttendances();
-
-    navigation.addListener('didFocus', () => {
+    if (isFocused) {
       getAttendances();
-    });
-  }, []); // eslint-disable-line
+    }
+  }, [isFocused]); // eslint-disable-line
 
   async function handleAttendanceCancel(attendanceId) {
     try {
@@ -143,8 +142,7 @@ Attendance.navigationOptions = {
 };
 
 Attendance.propTypes = {
-  navigation: PropTypes.shape({
-    navigate: PropTypes.func.isRequired,
-    addListener: PropTypes.func.isRequired,
-  }).isRequired,
+  isFocused: PropTypes.bool.isRequired,
 };
+
+export default withNavigationFocus(Attendance);

@@ -7,6 +7,7 @@ import { isBefore, subDays, addDays, parseISO } from 'date-fns';
 import { format } from 'date-fns-tz';
 import pt from 'date-fns/locale/pt';
 import * as RNLocalize from 'react-native-localize';
+import { withNavigationFocus } from 'react-navigation';
 
 import Header from '~/components/Header';
 import Background from '~/components/Background';
@@ -26,14 +27,14 @@ import {
   MeetupImage,
 } from './styles';
 
-export default function Dashboard({ navigation }) {
+function Dashboard({ navigation, isFocused }) {
   const today = new Date();
   const timeZone = RNLocalize.getTimeZone(); // Need the TIMEZONE to avoid a day after. Example: 22:00 T-3
   const compareToday = parseISO(format(today, 'yyyy-MM-dd', { timeZone }));
   const [date, setDate] = useState(compareToday);
   const [page, setPage] = useState(1);
   const [schedule, setSchedule] = useState([]);
-  const [reload, setReload] = useState(false);
+
   const user_id = useSelector(state => state.user.profile.id);
 
   const dateFormatted = useMemo(
@@ -41,50 +42,59 @@ export default function Dashboard({ navigation }) {
     [date],
   );
 
-  useEffect(() => {
-    async function loadSchedule() {
-      try {
-        const queryDate = format(date, 'yyyy-MM-dd');
-        const response = await api.get('/schedule', {
-          params: { date: queryDate, page },
-        });
-        setReload(false);
-        if (response.data) {
-          const aux = response.data
-            .filter(meetup => meetup.past === false)
-            .filter(
-              meetup =>
-                meetup.Attendances.every(user => user.user_id !== user_id) ===
-                true,
-            )
-            .map(meetup => {
-              return {
-                ...meetup,
-                formattedDate: format(
-                  parseISO(meetup.date),
-                  "dd 'de' MMMM 'de' yyyy', às' HH:mm",
-                  {
-                    locale: pt,
-                  },
-                ),
-              };
-            });
+  async function loadSchedule(newDate, newPage = 1) {
+    try {
+      const queryDate = format(newDate, 'yyyy-MM-dd');
+      const response = await api.get('/schedule', {
+        params: { date: queryDate, page: newPage },
+      });
 
-          setSchedule(aux);
+      if (response.data) {
+        const newSchedule = response.data
+          .filter(meetup => meetup.past === false && meetup.user_id !== user_id)
+          .filter(
+            meetup =>
+              meetup.Attendances.every(user => user.user_id !== user_id) ===
+              true,
+          )
+          .map(meetup => {
+            return {
+              ...meetup,
+              formattedDate: format(
+                parseISO(meetup.date),
+                "dd 'de' MMMM 'de' yyyy', às' HH:mm",
+                {
+                  locale: pt,
+                },
+              ),
+            };
+          });
+
+        // Same date, different page
+        if (newPage > 1) {
+          setSchedule([...schedule, ...newSchedule]);
         }
-      } catch (err) {
-        Alert.alert('Erro', 'Erro ao tentar buscar os Meetups do dia');
-      }
-    }
 
-    loadSchedule();
-  }, [date, page, reload, user_id]);
+        // Different date
+        else {
+          setSchedule(newSchedule);
+        }
+        setPage(newPage);
+      }
+    } catch (err) {
+      Alert.alert('Erro', 'Erro ao tentar buscar os Meetups do dia');
+    }
+  }
 
   useEffect(() => {
-    navigation.addListener('didFocus', () => {
-      setReload(true);
-    });
-  }, []); // eslint-disable-line
+    if (isFocused) {
+      loadSchedule(date);
+    }
+  }, [isFocused]); // eslint-disable-line
+
+  useEffect(() => {
+    loadSchedule(date);
+  }, [date]); // eslint-disable-line
 
   function handlePrevDay() {
     const newDate = subDays(date, 1);
@@ -106,7 +116,6 @@ export default function Dashboard({ navigation }) {
       await api.post('/attendances', {
         meetup_id,
       });
-      setPage(1);
 
       navigation.navigate('Attendance');
       Alert.alert('Sucesso', 'Inscrição realizada com sucesso!');
@@ -116,6 +125,11 @@ export default function Dashboard({ navigation }) {
         'Erro ao tentar realizar sua inscrição a este Meetup.',
       );
     }
+  }
+
+  function handleLoadMore() {
+    const nextPage = page + 1;
+    loadSchedule(date, nextPage);
   }
 
   return (
@@ -137,6 +151,8 @@ export default function Dashboard({ navigation }) {
               data={schedule}
               keyExtractor={item => item.id.toString()}
               showsVerticalScrollIndicator={false}
+              onEndReached={handleLoadMore}
+              onEndReachedThreshold={0.8}
               renderItem={({ item }) => (
                 <MeetupView>
                   <MeetupImage
@@ -205,6 +221,8 @@ Dashboard.navigationOptions = {
 Dashboard.propTypes = {
   navigation: PropTypes.shape({
     navigate: PropTypes.func.isRequired,
-    addListener: PropTypes.func.isRequired,
   }).isRequired,
+  isFocused: PropTypes.bool.isRequired,
 };
+
+export default withNavigationFocus(Dashboard);
