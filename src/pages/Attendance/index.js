@@ -21,7 +21,7 @@ import {
   MeetupImage,
 } from './styles';
 
-export default function Attendance() {
+export default function Attendance({ navigation }) {
   const [meetups, setMeetups] = useState([]);
 
   async function getAttendances() {
@@ -49,7 +49,11 @@ export default function Attendance() {
 
   useEffect(() => {
     getAttendances();
-  }, []);
+
+    navigation.addListener('didFocus', () => {
+      getAttendances();
+    });
+  }, []); // eslint-disable-line
 
   async function handleAttendanceCancel(attendanceId) {
     try {
@@ -136,4 +140,11 @@ tabBarIcon.propTypes = {
 Attendance.navigationOptions = {
   tabBarLabel: 'Inscrições',
   tabBarIcon,
+};
+
+Attendance.propTypes = {
+  navigation: PropTypes.shape({
+    navigate: PropTypes.func.isRequired,
+    addListener: PropTypes.func.isRequired,
+  }).isRequired,
 };
