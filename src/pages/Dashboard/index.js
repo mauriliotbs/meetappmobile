@@ -34,6 +34,7 @@ function Dashboard({ navigation, isFocused }) {
   const [date, setDate] = useState(compareToday);
   const [page, setPage] = useState(1);
   const [schedule, setSchedule] = useState([]);
+  const [maxPage, setMaxPage] = useState(1);
 
   const user_id = useSelector(state => state.user.profile.id);
 
@@ -78,6 +79,9 @@ function Dashboard({ navigation, isFocused }) {
         // Different date
         else {
           setSchedule(newSchedule);
+          // Set pagination limit
+          const totalMeetups = Number(response.headers['total-meetups']);
+          setMaxPage(Math.floor(totalMeetups / 10) + 1);
         }
         setPage(newPage);
       }
@@ -120,16 +124,22 @@ function Dashboard({ navigation, isFocused }) {
       navigation.navigate('Attendance');
       Alert.alert('Sucesso', 'Inscrição realizada com sucesso!');
     } catch (err) {
-      Alert.alert(
-        'Erro',
-        'Erro ao tentar realizar sua inscrição a este Meetup.',
-      );
+      if (err.response.data.error) {
+        Alert.alert('Erro', err.response.data.error);
+      } else {
+        Alert.alert(
+          'Erro',
+          'Erro ao tentar realizar sua inscrição a este Meetup.',
+        );
+      }
     }
   }
 
   function handleLoadMore() {
     const nextPage = page + 1;
-    loadSchedule(date, nextPage);
+    if (nextPage <= maxPage) {
+      loadSchedule(date, nextPage);
+    }
   }
 
   return (

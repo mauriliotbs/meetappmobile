@@ -10,14 +10,14 @@ export const Container = styled.View`
 
 export const DateView = styled.View`
   flex-direction: row;
-  align-items: center;
+  align-items: stretch;
   margin: 10px 0 20px;
 `;
 
 export const DateText = styled.Text`
   color: #ffffff;
   font-size: 20px;
-  margin: 0 10px;
+  margin: 0px 10px;
 `;
 
 export const MeetupView = styled.View`
